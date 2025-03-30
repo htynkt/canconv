@@ -1,0 +1,19 @@
+# ninja log v5
+3	2341	1743310300085147160	canconv/layers/pwac/CMakeFiles/pwacnative.dir/permute_kernel.cu.o	7e4729fbdfa92e7
+4	3275	1743310301021168989	kmcuda/src/CMakeFiles/KMCUDA.dir/kmcuda.cc.o	68f0c7897ee7195a
+5	4029	1743310301777186577	kmcuda/src/CMakeFiles/KMCUDA.dir/transpose.cu.o	abe4b6673dc03a5
+5	7783	1743310305529273408	kmcuda/src/CMakeFiles/KMCUDA.dir/knn.cu.o	c766007aa5ebd3be
+4	11703	1743310309445363192	kmcuda/src/CMakeFiles/KMCUDA.dir/kmeans.cu.o	9c01e642c558d7b2
+3	20596	1743310318325563623	canconv/layers/pwac/CMakeFiles/pwacnative.dir/dispatch_indice.cc.o	5e3b3fa42d0ea501
+2	20620	1743310318345564070	canconv/layers/pwac/CMakeFiles/pwacnative.dir/utils.cc.o	99337f532608b05f
+1	21096	1743310318829574871	canconv/layers/pwac/CMakeFiles/pwacnative.dir/im2col.cc.o	3e92531e043d8e4c
+5	21134	1743310318865575674	kmcuda/src/CMakeFiles/KMCUDA.dir/torch.cc.o	d256165a2bd3062a
+21134	21790	1743310319525590373	kmcuda/src/libKMCUDA.so	4a4eda498c0cd013
+21790	21802	1743310319549590908	../canconv/layers/kmeans/libKMCUDA.so	ddbde9d3a9d3e342
+21790	21802	1743310319549590908	/root/autodl-tmp/CANConv/canconv/layers/kmeans/libKMCUDA.so	ddbde9d3a9d3e342
+1	21848	1743310319585591709	canconv/layers/pwac/CMakeFiles/pwacnative.dir/main.cc.o	8070904162623ec9
+4	22955	1743310320673615893	canconv/layers/pwac/CMakeFiles/pwacnative.dir/permute.cc.o	827b3b9293f6ae90
+2	23429	1743310321145626367	canconv/layers/pwac/CMakeFiles/pwacnative.dir/matmul_attn.cc.o	1b19cd9399399a9e
+2	24132	1743310321849641961	canconv/layers/pwac/CMakeFiles/pwacnative.dir/matmul_conv.cc.o	32bcbf00e525d29a
+1	53588	1743310351286270277	canconv/layers/pwac/CMakeFiles/pwacnative.dir/naive_conv.cu.o	8fd69fa0a39bda6a
+53590	54147	1743310351874282368	canconv/layers/pwac/libpwacnative.so	8feb25cd5a5d297
