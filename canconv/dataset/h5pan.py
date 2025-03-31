@@ -30,13 +30,26 @@ class H5PanDataset(Dataset):
         with h5py.File(file_path) as file:
             if "/gt" in file:
                 self.has_gt = True
-                self.gt = load_h5_key_to_torch(file, "/gt", scale).to(device)
+                gt = load_h5_key_to_torch(file, "/gt", scale).to(device)
             else:
                 self.has_gt = False
             
             self.ms = load_h5_key_to_torch(file, "/ms", scale).to(device)
-            self.lms = load_h5_key_to_torch(file, "/lms", scale).to(device)
-            self.pan = load_h5_key_to_torch(file, "/pan", scale).to(device)
+            lms = load_h5_key_to_torch(file, "/lms", scale).to(device)
+            pan = load_h5_key_to_torch(file, "/pan", scale).to(device)
+            #改：
+            height, width = lms.shape[-2:]
+            if height == 64 and width == 64:
+                self.lms = lms
+                self.pan = pan
+                self.gt=gt
+            else:
+                start_x = (256 - 64) // 2
+                start_y = (256 - 64) // 2
+                self.lms = lms[:,:,start_y:start_y + 64, start_x:start_x + 64]
+                self.pan = pan[:,:,start_y:start_y + 64, start_x:start_x + 64]
+                self.gt = gt[:,:,start_y:start_y + 64, start_x:start_x + 64]
+
             
         if pool:
             self.ms = F.avg_pool2d(self.ms, 2)

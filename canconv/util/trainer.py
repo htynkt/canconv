@@ -198,10 +198,10 @@ class SimplePanTrainer(metaclass=ABCMeta):
             shuffle=True,  # 打乱数据顺序
             drop_last=False,  # 不丢弃最后一个不完整的批次
             pin_memory=True)  # 使用pin_memory加速数据传输
-        # 创建验证集的数据加载器
+        # 创建验证集的数据加载器（改）：
         val_loader = DataLoader(
-            dataset=self.val_dataset,  # 指定验证集
-            batch_size=self.cfg['batch_size'],  # 设置每个批次的大小
+            dataset=self.test_dataset,  # 指定验证集
+            batch_size=1,  # 设置每个批次的大小
             shuffle=True,  # 打乱数据顺序
             drop_last=False,  # 不丢弃最后一个不完整的批次
             pin_memory=True)  # 使用pin_memory加速数据传输
@@ -228,6 +228,8 @@ class SimplePanTrainer(metaclass=ABCMeta):
         #改：
         sam_data = BufferedReporter('Metrics/sam', writer)
         scc_data = BufferedReporter('Metrics/scc', writer)
+        ergas_data= BufferedReporter('Metrics/ergas',writer)
+        psnr_data=BufferedReporter('Metrics/psnr',writer)
 
         # 记录开始训练
         self.logger.info(f"Begin Training.")
@@ -255,18 +257,15 @@ class SimplePanTrainer(metaclass=ABCMeta):
                 B_hat = B_hat.repeat(self.cfg['spectral_num'],self.cfg['spectral_num'] , 1, 1)  # 形状变为 [4, 4, 7, 7]
                 ms_eval = F.conv2d(sr, B_hat, padding=3)
 
-                fused_eval=self.Adata * sr
+                fused_eval=self.Adata.detach() * sr#如果不行，试试深度copy
+                fused_eval=fused_eval.sum(dim=1, keepdim=True)
                 # 计算损失
-                loss1 = self.criterion1(sr, ms_eval.to(self.dev)) #?在dev上吗
-                loss2 = self.criterion2(sr, fused_eval.to(self.dev)) #?在dev上吗
+                loss1 = self.criterion(sr, ms_eval.to(self.dev)) #?在dev上吗 spectral
+                loss2 = self.criterion(batch['pan'].to(self.dev), fused_eval.to(self.dev)) #?在dev上吗 spatial
                 loss=loss1+loss2
 
                 # 将损失值添加到训练损失的记录器中
                 train_loss.add_scalar(loss.item())
-
-                #改：(检查归一化)
-                sam_data.add_scalar(sam(sr[0].cpu().detach().numpy(), batch['lms'][0].cpu().detach().numpy()))
-                scc_data.add_scalar(sCC(sr[0].cpu().detach().numpy(), batch['lms'][0].cpu().detach().numpy()))
 
                 # 反向传播
                 loss.backward()
@@ -283,16 +282,12 @@ class SimplePanTrainer(metaclass=ABCMeta):
             train_loss.flush(epoch)
             train_time.flush(epoch)
 
-            #改：
-            sam_data.flush(epoch)
-            scc_data.flush(epoch)
-
             # 学习率调度器更新学习率
             self.scheduler.step()
             # 记录当前epoch的训练完成
             self.logger.debug(f"Epoch {epoch} train done")
 
-            #验证？还需要吗
+            #验证？用test
             # 如果当前epoch是验证间隔的整数倍
             if epoch % self.cfg['val_interval'] == 0:
                 # 调用验证开始时的方法
@@ -312,9 +307,28 @@ class SimplePanTrainer(metaclass=ABCMeta):
                         val_loss.add_scalar(loss.item())
                         # 将验证时间添加到记录器中
                         val_time.add_scalar(time.time() - start_time)
+                        #改：
+                        gt_data=batch['gt'].cpu().detach().numpy()
+                        sr_data=sr.cpu().detach().numpy()
+                        sam_data = sam(gt_data, sr_data)
+                        scc_data = sCC(gt_data, sr_data)
+                        ergas_data = ergas(gt_data, sr_data)
+                        psnr_data = calculate_psnr(gt_data, sr_data)
+
+                        sam_data.add_scalar(sam_data)
+                        scc_data.add_scalar(scc_data)
+                        ergas_data.add_scalar(ergas_data)
+                        psnr_data.add_scalar(psnr_data)
+
                     # 将验证损失和时间的记录器刷新到TensorBoard
                     val_loss.flush(epoch)
                     val_time.flush(epoch)
+                    #改：
+                    sam_data.flush(epoch)
+                    scc_data.flush(epoch)
+                    ergas_data.flush(epoch)
+                    psnr_data.flush(epoch)
+
                 # 记录当前epoch的验证完成
                 self.logger.debug(f"Epoch {epoch} val done")
 

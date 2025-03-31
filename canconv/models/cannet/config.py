@@ -24,8 +24,7 @@ class CANNetTrainer(SimplePanTrainer):
     def _create_model(self, cfg):
         # 根据配置选择损失函数
         if cfg["loss"] == "l1":
-            self.criterion1 = nn.L1Loss(reduction='mean').to(self.dev)
-            self.criterion2 = nn.L1Loss(reduction='mean').to(self.dev)
+            self.criterion = nn.L1Loss(reduction='mean').to(self.dev)
         elif cfg["loss"] == "l2":
             self.criterion = nn.MSELoss(reduction='mean').to(self.dev)
         else:
