@@ -6,10 +6,12 @@ from skimage import filters
 from skimage.metrics import peak_signal_noise_ratio as psnr_func
 
 def sam(ms, ps):
+    # print(ms.shape)
+    # print(ps.shape)
     assert ms.ndim == 3 and ms.shape == ps.shape
 
-    ms = ms.astype(np.float32)
-    ps = ps.astype(np.float32)
+    # ms = ms.astype(np.float32)
+    # ps = ps.astype(np.float32)
 
     dot_sum = np.sum(ms*ps, axis=2)
     norm_true = norm(ms, axis=2)
@@ -44,8 +46,8 @@ def sCC(ms, ps):
 
 def ergas(ms, ps, ratio=8):
     # 将输入的多光谱图像（ms）和配准后的图像（ps）转换为float32类型，以进行精确计算
-    ms = ms.astype(np.float32)
-    ps = ps.astype(np.float32)
+    # ms = ms.astype(np.float32)
+    # ps = ps.astype(np.float32)
 
     # 计算两个图像之间的差异
     err = ms - ps
@@ -69,8 +71,8 @@ def ergas(ms, ps, ratio=8):
 
 
 def calculate_psnr(img1, img2):
-    img1 = img1.astype(np.float32)
-    img2 = img2.astype(np.float32)
+    # img1 = img1.astype(np.float32)
+    # img2 = img2.astype(np.float32)
     
     # 计算MSE（均方误差）
     mse = np.mean((img1 - img2) ** 2)

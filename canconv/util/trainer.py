@@ -226,10 +226,10 @@ class SimplePanTrainer(metaclass=ABCMeta):
         # 初始化验证时间的记录器
         val_time = BufferedReporter('val/time', writer)
         #改：
-        sam_data = BufferedReporter('Metrics/sam', writer)
-        scc_data = BufferedReporter('Metrics/scc', writer)
-        ergas_data= BufferedReporter('Metrics/ergas',writer)
-        psnr_data=BufferedReporter('Metrics/psnr',writer)
+        # sam_data = BufferedReporter('Metrics/sam', writer)
+        # scc_data = BufferedReporter('Metrics/scc', writer)
+        # ergas_data= BufferedReporter('Metrics/ergas',writer)
+        # psnr_data=BufferedReporter('Metrics/psnr',writer)
 
         # 记录开始训练
         self.logger.info(f"Begin Training.")
@@ -296,6 +296,7 @@ class SimplePanTrainer(metaclass=ABCMeta):
                 with torch.no_grad():
                     self.model.eval()
                     # 遍历验证集的每个批次
+                    epoch=1
                     for batch in val_loader:
                         # 记录开始时间
                         start_time = time.time()
@@ -307,27 +308,42 @@ class SimplePanTrainer(metaclass=ABCMeta):
                         val_loss.add_scalar(loss.item())
                         # 将验证时间添加到记录器中
                         val_time.add_scalar(time.time() - start_time)
+
                         #改：
                         gt_data=batch['gt'].cpu().detach().numpy()
                         sr_data=sr.cpu().detach().numpy()
+                        gt_data = gt_data.squeeze(0)  # 大小变为 (8, 64, 64)
+                        sr_data = sr_data.squeeze(0)  # 大小变为 (8, 64, 64)
+                        # 转换为 NumPy 数组
+                        gt_data = gt_data.astype(np.float32)
+                        sr_data = sr_data.astype(np.float32)
+
+                        # 调整维度顺序为 (64, 64, 8)
+                        gt_data = np.transpose(gt_data, (1, 2, 0))
+                        sr_data = np.transpose(sr_data, (1, 2, 0))
+
+                        # 使用 max-min 归一化
+                        # gt_min, gt_max = gt_data.min(), gt_data.max()
+                        # sr_min, sr_max = sr_data.min(), sr_data.max()
+                        #
+                        # gt_data = (gt_data - gt_min) / (gt_max - gt_min)
+                        # sr_data = (sr_data - sr_min) / (sr_max - sr_min)
+
                         sam_data = sam(gt_data, sr_data)
                         scc_data = sCC(gt_data, sr_data)
                         ergas_data = ergas(gt_data, sr_data)
                         psnr_data = calculate_psnr(gt_data, sr_data)
 
-                        sam_data.add_scalar(sam_data)
-                        scc_data.add_scalar(scc_data)
-                        ergas_data.add_scalar(ergas_data)
-                        psnr_data.add_scalar(psnr_data)
+                        # 将指标记录到 TensorBoard
+                        writer.add_scalar('SAM', sam_data, global_step=epoch)
+                        writer.add_scalar('sCC', scc_data, global_step=epoch)
+                        writer.add_scalar('ERGAS', ergas_data, global_step=epoch)
+                        writer.add_scalar('PSNR', psnr_data, global_step=epoch)
+                        epoch+=1
 
                     # 将验证损失和时间的记录器刷新到TensorBoard
                     val_loss.flush(epoch)
                     val_time.flush(epoch)
-                    #改：
-                    sam_data.flush(epoch)
-                    scc_data.flush(epoch)
-                    ergas_data.flush(epoch)
-                    psnr_data.flush(epoch)
 
                 # 记录当前epoch的验证完成
                 self.logger.debug(f"Epoch {epoch} val done")
