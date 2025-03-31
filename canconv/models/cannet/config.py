@@ -33,11 +33,14 @@ class CANNetTrainer(SimplePanTrainer):
         self.model = CANNet(cfg['spectral_num'], cfg['channels'],
                             cfg['cluster_num'], cfg["filter_threshold"]).to(self.dev)
         # 改：
-        self.kenet=KENet(spectral_num=cfg['spectral_num'])
+        self.kenet=KENet(spectral_num=cfg['spectral_num']).to(self.dev)
+        # 获取两个模型的参数
+        model_params = list(self.model.parameters()) + list(self.kenet.parameters())
+
         self.Adata=self.model.custom_param
+
         # 初始化优化器?
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), self.kenet.parameters(),lr=cfg["learning_rate"], weight_decay=0)
+        self.optimizer = torch.optim.Adam(model_params,lr=cfg["learning_rate"], weight_decay=0)
 
         # 初始化学习率调度器
         self.scheduler = torch.optim.lr_scheduler.StepLR(

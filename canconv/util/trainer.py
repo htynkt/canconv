@@ -34,7 +34,7 @@ from .log import BufferedReporter, to_rgb
 from ..dataset.h5pan import H5PanDataset
 #改：
 import torch.nn.functional as F
-from eval_matrics import *
+from canconv.util.eval_matrics import *
 
 # 定义一个抽象基类SimplePanTrainer
 class SimplePanTrainer(metaclass=ABCMeta):
