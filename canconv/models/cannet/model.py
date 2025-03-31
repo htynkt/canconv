@@ -3,6 +3,39 @@ import torch.nn as nn
 from torch.nn import functional as F
 from canconv.layers.canconv import CANConv
 
+class CRP(nn.Module):
+    def __init__(self, in_channels):
+        super(CRP, self).__init__()
+        self.conv = nn.Conv2d(in_channels, 32, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.pool = nn.MaxPool2d(2, stride=2)
+
+    def forward(self, x):
+        x = self.relu(self.conv(x))
+        x = self.pool(x)
+        return x
+
+#改:
+class KENet(nn.Module):
+    def __init__(self,spectral_num):
+        super(KENet, self).__init__()
+        self.crp1 = CRP(spectral_num)
+        self.crp2 = CRP(in_channels=32)
+        self.fc1 = nn.Linear(8192, 128)
+        self.fc2 = nn.Linear(128, 49)
+        self.softmax = nn.Softmax(dim=1)  # Softmax激活函数，用于确保输出的非负性和总和为1
+        # initialize_weights(self.crp1,self.crp2)  # 调用初始化权重的函数
+
+    def forward(self, m_up):
+        x = self.crp1(m_up)
+        x = self.crp2(x)
+        x = x.view(x.size(0), -1)  # 将特征图展平，准备输入到全连接层
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        B_hat = self.softmax(x).view(-1,1, 7,7)  # 应用Softmax激活函数，并将输出重塑为kxk的模糊核
+        B_hat_avg = B_hat.mean(dim=0).squeeze()
+
+        return B_hat_avg  # 返回估计的模糊核B_hat
 
 class CANResBlock(nn.Module):
     def __init__(self, channels, cluster_num, filter_threshold, cluster_source="channel", *args, **kwargs) -> None:
